@@ -113,12 +113,26 @@ struct PoseGraphAbsoluteCost {
 
 struct PoseGraphRelativeSim3Cost {
  public:
-  explicit PoseGraphRelativeCost(const Eigen::Matrix4d& T_j_i,
-                                 const Matrix7d covariance)
-      : sqrt_information_(covariance.inverse().llt().matrixL()) {Sophus::Sim3 meas_Sim_j_i_(T_j_i) }
+  explicit PoseGraphRelativeCost(const double s_j_i,
+                                 const Eigen::Vector4d& qvec_j_i,
+                                 const Eigen::Vector3d& tvec_j_i,
+                                 const Matrix6d covariance)
+      : sqrt_information_(covariance.inverse().llt().matrixL()) {
+    Eigen::Matrix<T, 3, 3> sR_j_i;
+    ceres::QuaternionToRotation(qvec_j_i, sR_j_i);
+    sR_j_i = s_j_i * sR_j_i;
+    Eigen::Matrix<T, 4, 4> T_j_i;
+    T_j_i << sR_j_i(0,0), sR_j_i(0,1), sR_j_i(0,2), tvec_j_i[0],
+             sR_j_i(1,0), sR_j_i(1,1), sR_j_i(1,2), tvec_j_i[1],
+             sR_j_i(2,0), sR_j_i(2,1), sR_j_i(2,2), tvec_j_i[2],
+             0,           0,           0,           1;
+    Sophus::Sim3 Sim_j_i_(T_j_i);
+  }
 
-  static ceres::CostFunction* Create(const Eigen::Matrix4d& T_j_i,
-                                     const Matrix7d covariance) {
+  static ceres::CostFunction* Create(const double s_j_i,
+                                     const Eigen::Vector4d& qvec_j_i,
+                                     const Eigen::Vector3d& tvec_j_i,
+                                     const Matrix6d covariance) {
     return (new ceres::AutoDiffCostFunction<PoseGraphRelativeCost, 7, 1, 4, 3, 1, 4, 3>(
         new PoseGraphRelativeCost(T_j_i, covariance)));
   }
@@ -147,7 +161,7 @@ struct PoseGraphRelativeSim3Cost {
              0,           0,           0,           1;
     Sophus::Sim3 Sim_j_w(T_j_w);
     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
-    residual = (meas_Sim_j_i * Sim_i_w * Sim_j_w.inverse());
+    residual = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse());
     residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
     return true;
