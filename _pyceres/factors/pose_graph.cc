@@ -118,7 +118,7 @@ struct PoseGraphRelativeSim3Cost {
                                  const Eigen::Vector3d& tvec_j_i,
                                  const Matrix6d covariance)
       : sqrt_information_(covariance.inverse().llt().matrixL()) {
-    std::unique_ptr<double> p_j_i;
+    double* p_j_i;
     ceres::MatrixAdapter<double, 3, 1> sR_j_i(p_j_i);
     ceres::QuaternionToRotation(qvec_j_i, sR_j_i);
     sR_j_i = s_j_i * sR_j_i;
@@ -142,7 +142,7 @@ struct PoseGraphRelativeSim3Cost {
   bool operator()(const T s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
                   const T s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
                   T* residuals_ptr) const {
-    std::unique_ptr<double> p_i_w;
+    double* p_i_w;
     ceres::MatrixAdapter<double, 3, 1> sR_i_w(p_i_w);
     ceres::QuaternionToRotation(qvec_i_w, sR_i_w);
     sR_i_w = s_i_w * sR_i_w;
@@ -153,7 +153,7 @@ struct PoseGraphRelativeSim3Cost {
              0,           0,           0,           1;
     Sophus::Sim3<T> Sim_i_w(T_i_w);
 
-    std::unique_ptr<double> p_j_w;
+    double* p_j_w;
     ceres::MatrixAdapter<double, 3, 1> sR_j_w(p_j_w);
     ceres::QuaternionToRotation(qvec_j_w, sR_j_w);
     sR_j_w = s_j_w * sR_j_w;
