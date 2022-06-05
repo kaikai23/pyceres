@@ -39,11 +39,11 @@ void bind_factors(py::module& m) {
         py::arg("qvec_i_w"),
         py::arg("tvec_i_w"),
         py::arg("covariance"));
- m.def("PoseGraphRelativeSim3Cost", &PoseGraphRelativeSim3Cost::Create,
-        py::arg("s_j_i"),
-        py::arg("qvec_j_i"),
-        py::arg("tvec_j_i"),
-        py::arg("covariance"));
+//  m.def("PoseGraphRelativeSim3Cost", &PoseGraphRelativeSim3Cost::Create,
+//         py::arg("s_j_i"),
+//         py::arg("qvec_j_i"),
+//         py::arg("tvec_j_i"),
+//         py::arg("covariance"));
 
   m.def("NormalPrior", &CreateNormalPrior,
         py::arg("mean"),
