@@ -116,7 +116,7 @@ struct PoseGraphRelativeSim3Cost {
   explicit PoseGraphRelativeSim3Cost(const double s_j_i,
                                  const Eigen::Vector4d& qvec_j_i,
                                  const Eigen::Vector3d& tvec_j_i,
-                                 const Matrix6d covariance)
+                                 const Matrix7d covariance)
       : sqrt_information_(covariance.inverse().llt().matrixL()) {
     double* p_j_i;
     ceres::MatrixAdapter<double, 3, 1> R_j_i(p_j_i);
@@ -132,7 +132,7 @@ struct PoseGraphRelativeSim3Cost {
   static ceres::CostFunction* Create(const double s_j_i,
                                      const Eigen::Vector4d& qvec_j_i,
                                      const Eigen::Vector3d& tvec_j_i,
-                                     const Matrix6d covariance) {
+                                     const Matrix7d covariance) {
     return (new ceres::AutoDiffCostFunction<PoseGraphRelativeSim3Cost, 7, 1, 4, 3, 1, 4, 3>(
         new PoseGraphRelativeSim3Cost(s_j_i, qvec_j_i, tvec_j_i, covariance)));
   }
@@ -142,7 +142,7 @@ struct PoseGraphRelativeSim3Cost {
                   const T* s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
                   T* residuals_ptr) const {
     double* p_i_w;
-    ceres::MatrixAdapter<double, 3, 1> R_i_w(p_i_w);
+    ceres::MatrixAdapter<T, 3, 1> R_i_w(p_i_w);
     ceres::QuaternionToRotation(qvec_i_w, R_i_w);
     Eigen::Matrix<T, 4, 4> T_i_w;
     T_i_w << s_i_w[0] * R_i_w(0,0), s_i_w[0] * R_i_w(0,1), s_i_w[0] * R_i_w(0,2), tvec_i_w[0],
@@ -152,7 +152,7 @@ struct PoseGraphRelativeSim3Cost {
     Sophus::Sim3<T> Sim_i_w(T_i_w);
 
     double* p_j_w;
-    ceres::MatrixAdapter<double, 3, 1> R_j_w(p_j_w);
+    ceres::MatrixAdapter<T, 3, 1> R_j_w(p_j_w);
     ceres::QuaternionToRotation(qvec_j_w, R_j_w);
     Eigen::Matrix<T, 4, 4> T_j_w;
     T_j_w << s_j_w[0] * R_j_w(0,0), s_j_w[0] * R_j_w(0,1), s_j_w[0] * R_j_w(0,2), tvec_j_w[0],
@@ -161,7 +161,7 @@ struct PoseGraphRelativeSim3Cost {
              0,                  0,                  0,                  1;
     Sophus::Sim3<T> Sim_j_w(T_j_w);
     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
-    residuals = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse());
+    residuals = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse()).log();
     residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
     return true;
