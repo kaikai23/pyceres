@@ -138,8 +138,8 @@ struct PoseGraphRelativeSim3Cost {
   }
 
   template <typename T>
-  bool operator()(const T* s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
-                  const T* s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
+  bool operator()(const T* const s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
+                  const T* const s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
                   T* residuals_ptr) const {
     T array_i_w[9];
     ceres::MatrixAdapter<T, 3, 1> R_i_w = RowMajorAdapter3x3(array_i_w);
