@@ -111,13 +111,13 @@ struct PoseGraphAbsoluteCost {
 };
 
 
-// struct PoseGraphRelativeSim3Cost {
-//  public:
-//   explicit PoseGraphRelativeSim3Cost(const double s_j_i,
-//                                  const Eigen::Vector4d& qvec_j_i,
-//                                  const Eigen::Vector3d& tvec_j_i,
-//                                  const Matrix7d covariance)
-//       : sqrt_information_(covariance.inverse().llt().matrixL()) {
+struct PoseGraphRelativeSim3Cost {
+ public:
+  explicit PoseGraphRelativeSim3Cost(const double s_j_i,
+                                 const Eigen::Vector4d& qvec_j_i,
+                                 const Eigen::Vector3d& tvec_j_i,
+                                 const Matrix7d covariance)
+      : sqrt_information_(covariance.inverse().llt().matrixL()) {
 //     double array[9];
 //     ceres::MatrixAdapter<double, 3, 1> R_j_i = RowMajorAdapter3x3(array);
 //     ceres::QuaternionToRotation(qvec_j_i.data(), R_j_i);
@@ -127,20 +127,20 @@ struct PoseGraphAbsoluteCost {
 //              s_j_i * R_j_i(2,0), s_j_i * R_j_i(2,1), s_j_i * R_j_i(2,2), tvec_j_i[2],
 //              double(0.),         double(0.),         double(0.),         double(1.);
 //     Sophus::Sim3d meas_Sim_j_i_(T_j_i);
-//   }
+  }
 
-//   static ceres::CostFunction* Create(const double s_j_i,
-//                                      const Eigen::Vector4d& qvec_j_i,
-//                                      const Eigen::Vector3d& tvec_j_i,
-//                                      const Matrix7d covariance) {
-//     return (new ceres::AutoDiffCostFunction<PoseGraphRelativeSim3Cost, 7, 1, 4, 3, 1, 4, 3>(
-//         new PoseGraphRelativeSim3Cost(s_j_i, qvec_j_i, tvec_j_i, covariance)));
-//   }
+  static ceres::CostFunction* Create(const double s_j_i,
+                                     const Eigen::Vector4d& qvec_j_i,
+                                     const Eigen::Vector3d& tvec_j_i,
+                                     const Matrix7d covariance) {
+    return (new ceres::AutoDiffCostFunction<PoseGraphRelativeSim3Cost, 7, 1, 4, 3, 1, 4, 3>(
+        new PoseGraphRelativeSim3Cost(s_j_i, qvec_j_i, tvec_j_i, covariance)));
+  }
 
-//   template <typename T>
-//   bool operator()(const T* const s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
-//                   const T* const s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
-//                   T* residuals_ptr) const {
+  template <typename T>
+  bool operator()(const T* const s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
+                  const T* const s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
+                  T* residuals_ptr) const {
 //     T array_i_w[9];
 //     ceres::MatrixAdapter<T, 3, 1> R_i_w = RowMajorAdapter3x3(array_i_w);
 //     ceres::QuaternionToRotation(qvec_i_w, R_i_w);
@@ -160,17 +160,18 @@ struct PoseGraphAbsoluteCost {
 //              s_j_w[0] * R_j_w(2,0), s_j_w[0] * R_j_w(2,1), s_j_w[0] * R_j_w(2,2), tvec_j_w[2],
 //              T(0.),                 T(0.),                 T(0.),                 T(1.);
 //     Sophus::Sim3<T> Sim_j_w(T_j_w);
-//     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
+    Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
+    residuals << Eigen::Matrix<T,7,1>::Zero();
 //     residuals = (meas_Sim_j_i_.cast<T> * Sim_i_w * Sim_j_w.inverse()).log();
-//     residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
+    residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
-//     return true;
-//   }
+    return true;
+  }
 
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-//  private:
-//   // Measurement of relative pose from i to j.
-//   Sophus::Sim3d meas_Sim_j_i_;
-//   const Matrix7d sqrt_information_;
-// };
+ private:
+  // Measurement of relative pose from i to j.
+  Sophus::Sim3d meas_Sim_j_i_;
+  const Matrix7d sqrt_information_;
+};
