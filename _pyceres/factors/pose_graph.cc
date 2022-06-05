@@ -113,7 +113,7 @@ struct PoseGraphAbsoluteCost {
 
 struct PoseGraphRelativeSim3Cost {
  public:
-  explicit PoseGraphRelativeCost(const double s_j_i,
+  explicit PoseGraphRelativeSim3Cost(const double s_j_i,
                                  const Eigen::Vector4d& qvec_j_i,
                                  const Eigen::Vector3d& tvec_j_i,
                                  const Matrix6d covariance)
@@ -126,15 +126,16 @@ struct PoseGraphRelativeSim3Cost {
              sR_j_i(1,0), sR_j_i(1,1), sR_j_i(1,2), tvec_j_i[1],
              sR_j_i(2,0), sR_j_i(2,1), sR_j_i(2,2), tvec_j_i[2],
              0,           0,           0,           1;
-    Sophus::Sim3 Sim_j_i_(T_j_i);
+    Sophus::Sim3 Aux_Sim_j_i_(T_j_i);
+    Sim_j_i = Aux_Sim_j_i;
   }
 
   static ceres::CostFunction* Create(const double s_j_i,
                                      const Eigen::Vector4d& qvec_j_i,
                                      const Eigen::Vector3d& tvec_j_i,
                                      const Matrix6d covariance) {
-    return (new ceres::AutoDiffCostFunction<PoseGraphRelativeCost, 7, 1, 4, 3, 1, 4, 3>(
-        new PoseGraphRelativeCost(T_j_i, covariance)));
+    return (new ceres::AutoDiffCostFunction<PoseGraphRelativeSim3Cost, 7, 1, 4, 3, 1, 4, 3>(
+        new PoseGraphRelativeSim3Cost(s_j_i, qvec_j_i, tvec_j_i, covariance)));
   }
 
   template <typename T>
@@ -161,7 +162,7 @@ struct PoseGraphRelativeSim3Cost {
              0,           0,           0,           1;
     Sophus::Sim3 Sim_j_w(T_j_w);
     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
-    residual = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse());
+    residuals = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse());
     residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
     return true;
@@ -171,6 +172,6 @@ struct PoseGraphRelativeSim3Cost {
 
  private:
   // Measurement of relative pose from i to j.
-  Sophus::Sim3 meas_Sim_j_i_;
+  Sophus::Sim3 meas_Sim_j_i_();
   const Matrix7d sqrt_information_;
 };
