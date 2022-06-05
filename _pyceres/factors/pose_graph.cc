@@ -3,7 +3,10 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
+#include <sophus/sim3.hpp>
+
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
+using Matrix7d = Eigen::Matrix<double, 7, 7>;
 
 /* Adapted from:
  * https://github.com/ceres-solver/ceres-solver/blob/master/examples/slam/pose_graph_3d/pose_graph_3d_error_term.h
@@ -105,4 +108,55 @@ struct PoseGraphAbsoluteCost {
   Eigen::Vector4d q_i_w_;
   Eigen::Vector3d t_i_w_;
   const Matrix6d sqrt_information_;
+};
+
+
+struct PoseGraphRelativeSim3Cost {
+ public:
+  explicit PoseGraphRelativeCost(const Eigen::Matrix4d& T_j_i,
+                                 const Matrix7d covariance)
+      : sqrt_information_(covariance.inverse().llt().matrixL()) {Sophus::Sim3 meas_Sim_j_i_(T_j_i) }
+
+  static ceres::CostFunction* Create(const Eigen::Matrix4d& T_j_i,
+                                     const Matrix7d covariance) {
+    return (new ceres::AutoDiffCostFunction<PoseGraphRelativeCost, 7, 1, 4, 3, 1, 4, 3>(
+        new PoseGraphRelativeCost(T_j_i, covariance)));
+  }
+
+  template <typename T>
+  bool operator()(const T s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
+                  const T s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
+                  T* residuals_ptr) const {
+    Eigen::Matrix<T, 3, 3> sR_i_w;
+    ceres::QuaternionToRotation(qvec_i_w, sR_i_w);
+    sR_i_w = s_i_w * sR_i_w;
+    Eigen::Matrix<T, 4, 4> T_i_w;
+    T_i_w << sR_i_w(0,0), sR_i_w(0,1), sR_i_w(0,2), tvec_i_w[0],
+             sR_i_w(1,0), sR_i_w(1,1), sR_i_w(1,2), tvec_i_w[1],
+             sR_i_w(2,0), sR_i_w(2,1), sR_i_w(2,2), tvec_i_w[2],
+             0,           0,           0,           1;
+    Sophus::Sim3 Sim_i_w(T_i_w);
+
+    Eigen::Matrix<T, 3, 3> sR_j_w;
+    ceres::QuaternionToRotation(qvec_j_w, sR_j_w);
+    sR_j_w = s_j_w * sR_j_w;
+    Eigen::Matrix<T, 4, 4> T_j_w;
+    T_j_w << sR_j_w(0,0), sR_j_w(0,1), sR_j_w(0,2), tvec_j_w[0],
+             sR_j_w(1,0), sR_j_w(1,1), sR_j_w(1,2), tvec_j_w[1],
+             sR_j_w(2,0), sR_j_w(2,1), sR_j_w(2,2), tvec_j_w[2],
+             0,           0,           0,           1;
+    Sophus::Sim3 Sim_j_w(T_j_w);
+    Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
+    residual = (meas_Sim_j_i * Sim_i_w * Sim_j_w.inverse());
+    residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
+
+    return true;
+  }
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+ private:
+  // Measurement of relative pose from i to j.
+  Sophus::Sim3 meas_Sim_j_i_;
+  const Matrix7d sqrt_information_;
 };
