@@ -138,16 +138,16 @@ struct PoseGraphRelativeSim3Cost {
   }
 
   template <typename T>
-  bool operator()(const T s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
-                  const T s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
+  bool operator()(const T* s_i_w, const T* const qvec_i_w, const T* const tvec_i_w,
+                  const T* s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
                   T* residuals_ptr) const {
     double* p_i_w;
     ceres::MatrixAdapter<double, 3, 1> R_i_w(p_i_w);
     ceres::QuaternionToRotation(qvec_i_w, R_i_w);
     Eigen::Matrix<T, 4, 4> T_i_w;
-    T_i_w << s_i_w * R_i_w(0,0), s_i_w * R_i_w(0,1), s_i_w * R_i_w(0,2), tvec_i_w[0],
-             s_i_w * R_i_w(1,0), s_i_w * R_i_w(1,1), s_i_w * R_i_w(1,2), tvec_i_w[1],
-             s_i_w * R_i_w(2,0), s_i_w * R_i_w(2,1), s_i_w * R_i_w(2,2), tvec_i_w[2],
+    T_i_w << s_i_w[0] * R_i_w(0,0), s_i_w[0] * R_i_w(0,1), s_i_w[0] * R_i_w(0,2), tvec_i_w[0],
+             s_i_w[0] * R_i_w(1,0), s_i_w[0] * R_i_w(1,1), s_i_w[0] * R_i_w(1,2), tvec_i_w[1],
+             s_i_w[0] * R_i_w(2,0), s_i_w[0] * R_i_w(2,1), s_i_w[0] * R_i_w(2,2), tvec_i_w[2],
              0,                  0,                  0,                  1;
     Sophus::Sim3<T> Sim_i_w(T_i_w);
 
@@ -155,9 +155,9 @@ struct PoseGraphRelativeSim3Cost {
     ceres::MatrixAdapter<double, 3, 1> R_j_w(p_j_w);
     ceres::QuaternionToRotation(qvec_j_w, R_j_w);
     Eigen::Matrix<T, 4, 4> T_j_w;
-    T_j_w << s_j_w * R_j_w(0,0), s_j_w * R_j_w(0,1), s_j_w * R_j_w(0,2), tvec_j_w[0],
-             s_j_w * R_j_w(1,0), s_j_w * R_j_w(1,1), s_j_w * R_j_w(1,2), tvec_j_w[1],
-             s_j_w * R_j_w(2,0), s_j_w * R_j_w(2,1), s_j_w * R_j_w(2,2), tvec_j_w[2],
+    T_j_w << s_j_w[0] * R_j_w(0,0), s_j_w[0] * R_j_w(0,1), s_j_w[0] * R_j_w(0,2), tvec_j_w[0],
+             s_j_w[0] * R_j_w(1,0), s_j_w[0] * R_j_w(1,1), s_j_w[0] * R_j_w(1,2), tvec_j_w[1],
+             s_j_w[0] * R_j_w(2,0), s_j_w[0] * R_j_w(2,1), s_j_w[0] * R_j_w(2,2), tvec_j_w[2],
              0,                  0,                  0,                  1;
     Sophus::Sim3<T> Sim_j_w(T_j_w);
     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
