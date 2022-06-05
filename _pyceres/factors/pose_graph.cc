@@ -119,14 +119,13 @@ struct PoseGraphRelativeSim3Cost {
                                  const Matrix6d covariance)
       : sqrt_information_(covariance.inverse().llt().matrixL()) {
     double* p_j_i;
-    ceres::MatrixAdapter<double, 3, 1> sR_j_i(p_j_i);
-    ceres::QuaternionToRotation(qvec_j_i, sR_j_i);
-    sR_j_i = s_j_i * sR_j_i;
+    ceres::MatrixAdapter<double, 3, 1> R_j_i(p_j_i);
+    ceres::QuaternionToRotation(qvec_j_i.data(), R_j_i);
     Eigen::Matrix4d T_j_i;
-    T_j_i << sR_j_i(0,0), sR_j_i(0,1), sR_j_i(0,2), tvec_j_i[0],
-             sR_j_i(1,0), sR_j_i(1,1), sR_j_i(1,2), tvec_j_i[1],
-             sR_j_i(2,0), sR_j_i(2,1), sR_j_i(2,2), tvec_j_i[2],
-             0,           0,           0,           1;
+    T_j_i << s_j_i * R_j_i(0,0), s_j_i * R_j_i(0,1), s_j_i * R_j_i(0,2), tvec_j_i[0],
+             s_j_i * R_j_i(1,0), s_j_i * R_j_i(1,1), s_j_i * R_j_i(1,2), tvec_j_i[1],
+             s_j_i * R_j_i(2,0), s_j_i * R_j_i(2,1), s_j_i * R_j_i(2,2), tvec_j_i[2],
+             0,                  0,                  0,                  1;
     Sophus::Sim3d mear_Sim_j_i_(T_j_i);
   }
 
@@ -143,25 +142,23 @@ struct PoseGraphRelativeSim3Cost {
                   const T s_j_w, const T* const qvec_j_w, const T* const tvec_j_w,
                   T* residuals_ptr) const {
     double* p_i_w;
-    ceres::MatrixAdapter<double, 3, 1> sR_i_w(p_i_w);
-    ceres::QuaternionToRotation(qvec_i_w, sR_i_w);
-    sR_i_w = s_i_w * sR_i_w;
+    ceres::MatrixAdapter<double, 3, 1> R_i_w(p_i_w);
+    ceres::QuaternionToRotation(qvec_i_w, R_i_w);
     Eigen::Matrix<T, 4, 4> T_i_w;
-    T_i_w << sR_i_w(0,0), sR_i_w(0,1), sR_i_w(0,2), tvec_i_w[0],
-             sR_i_w(1,0), sR_i_w(1,1), sR_i_w(1,2), tvec_i_w[1],
-             sR_i_w(2,0), sR_i_w(2,1), sR_i_w(2,2), tvec_i_w[2],
-             0,           0,           0,           1;
+    T_i_w << s_i_w * R_i_w(0,0), s_i_w * R_i_w(0,1), s_i_w * R_i_w(0,2), tvec_i_w[0],
+             s_i_w * R_i_w(1,0), s_i_w * R_i_w(1,1), s_i_w * R_i_w(1,2), tvec_i_w[1],
+             s_i_w * R_i_w(2,0), s_i_w * R_i_w(2,1), s_i_w * R_i_w(2,2), tvec_i_w[2],
+             0,                  0,                  0,                  1;
     Sophus::Sim3<T> Sim_i_w(T_i_w);
 
     double* p_j_w;
-    ceres::MatrixAdapter<double, 3, 1> sR_j_w(p_j_w);
-    ceres::QuaternionToRotation(qvec_j_w, sR_j_w);
-    sR_j_w = s_j_w * sR_j_w;
+    ceres::MatrixAdapter<double, 3, 1> R_j_w(p_j_w);
+    ceres::QuaternionToRotation(qvec_j_w, R_j_w);
     Eigen::Matrix<T, 4, 4> T_j_w;
-    T_j_w << sR_j_w(0,0), sR_j_w(0,1), sR_j_w(0,2), tvec_j_w[0],
-             sR_j_w(1,0), sR_j_w(1,1), sR_j_w(1,2), tvec_j_w[1],
-             sR_j_w(2,0), sR_j_w(2,1), sR_j_w(2,2), tvec_j_w[2],
-             0,           0,           0,           1;
+    T_j_w << s_j_w * R_j_w(0,0), s_j_w * R_j_w(0,1), s_j_w * R_j_w(0,2), tvec_j_w[0],
+             s_j_w * R_j_w(1,0), s_j_w * R_j_w(1,1), s_j_w * R_j_w(1,2), tvec_j_w[1],
+             s_j_w * R_j_w(2,0), s_j_w * R_j_w(2,1), s_j_w * R_j_w(2,2), tvec_j_w[2],
+             0,                  0,                  0,                  1;
     Sophus::Sim3<T> Sim_j_w(T_j_w);
     Eigen::Map<Eigen::Matrix<T, 7, 1>> residuals(residuals_ptr);
     residuals = (meas_Sim_j_i_ * Sim_i_w * Sim_j_w.inverse());
