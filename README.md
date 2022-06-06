@@ -4,7 +4,7 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 
 ## Additional Dependencies besides original dependencies for pyceres
 1. [Sophus](https://github.com/strasdat/Sophus)
-2. [fmt](https://github.com/fmtlib/fmt) (if you have problems with fmt when building pyceres, try downgrading fmt to 8.0.0)
+2. (optional, for Sophus) [fmt](https://github.com/fmtlib/fmt) ,if you have problems with fmt when building pyceres, try downgrading fmt to 8.0.0 or build Sophus without fmt.
 ## Installation
 Before installation, make sure you have Sophus and fmt.
 1. Clone the repository and its submodule by running:
