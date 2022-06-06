@@ -1,13 +1,16 @@
-# pyceres
+# This is a test(fork) version of pyceres that adds Sim3 Cost function
 
 This repository provides minimal Python bindings for the [Ceres Solver](http://ceres-solver.org/) and the implementation of factor graphs for bundle adjustment and pose graph optimization.
 
+## Additional Dependencies besides original dependencies for pyceres
+1. [Sophus](https://github.com/strasdat/Sophus)
+2. [fmt](https://github.com/fmtlib/fmt) (if you have problems with fmt when building pyceres, try downgrading fmt to 8.0.0)
 ## Installation
-
+Before installation, make sure you have Sophus and fmt.
 1. Clone the repository and its submodule by running:
 
 ```sh
-git clone --recursive git@github.com:cvg/pyceres.git
+git clone --recursive git@github.com:kaikai23/pyceres.git
 cd pyceres
 ```
 
