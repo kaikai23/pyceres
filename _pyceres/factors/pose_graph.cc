@@ -126,7 +126,8 @@ struct PoseGraphRelativeSim3Cost {
               s_j_i * R_j_i(1,0), s_j_i * R_j_i(1,1), s_j_i * R_j_i(1,2), tvec_j_i[1],
               s_j_i * R_j_i(2,0), s_j_i * R_j_i(2,1), s_j_i * R_j_i(2,2), tvec_j_i[2],
               double(0.),         double(0.),         double(0.),         double(1.);
-     Sophus::Sim3d meas_Sim_j_i_(T_j_i);
+     Sophus::Sim3d meas_Sim_j_i(T_j_i);
+     meas_Sim_j_i_ = meas_Sim_j_i;
   }
 
   static ceres::CostFunction* Create(const double s_j_i,
